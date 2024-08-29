@@ -1,0 +1,61 @@
+<!-- flask_app/templates/layout.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Flask App{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light text-center">
+    <a class="navbar-brand mx-auto" href="/">Lukaririnki26 Tools</a>
+</nav>
+
+<div class="container mt-5">
+    {% block content %}{% endblock %}
+</div>
+
+<footer class="text-center">
+    <p>&copy; 2024 Fahmiriottss</p>
+</footer>
+<!-- Bootstrap Toast for Copy Notification -->
+
+<script>
+    function copyToClipboard(elementId) {
+        var copyText = document.getElementById(elementId).innerText;
+        var textArea = document.createElement("textarea");
+        textArea.value = copyText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('Copied to clipboard');
+    }
+
+    function showToast(message) {
+        var toast = new bootstrap.Toast(document.getElementById('copiedToast'));
+        var toastBody = toast._element.querySelector('.toast-body');
+        toastBody.innerText = message;
+        toast.show();
+    }
+
+    function pasteToInput(inputId) {
+        navigator.clipboard.readText()
+            .then(text => document.getElementById(inputId).value = text)
+            .catch(err => console.error('Failed to read clipboard contents: ', err));
+    }
+</script>
+
+<!-- Bootstrap Toast for Copy Notification -->
+<div class="toast" id="copiedToast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" style="position: fixed; top: 0; right: 0;">
+    <div class="toast-body"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
