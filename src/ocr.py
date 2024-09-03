@@ -43,7 +43,7 @@ def convert():
         # result = pytesseract.image_to_string(threshed, config='--psm 4', lang='ind')
 
         #Method 2
-        # Convert the image to grayscale
+        #Convert the image to grayscale
         gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         # Apply GaussianBlur to reduce noise and detail in the image
         blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
