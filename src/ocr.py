@@ -1,11 +1,16 @@
-from flask import Blueprint, render_template, request, jsonify, send_file
+from flask import Blueprint, render_template, request, jsonify, current_app
 import cv2
 import numpy as np
 import pytesseract
-import matplotlib.pyplot as plt
 from PIL import Image
+import re
 
 ocr = Blueprint('ocr', __name__)
+
+def extract_capslock_text(input_text):
+    capitalized_words = re.findall(r'\b[A-Z]+\b', input_text)
+    result = ' '.join(capitalized_words)
+    return result
 
 @ocr.route('/', methods=['GET'])
 def index():
@@ -30,31 +35,99 @@ def convert():
         # Convert to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        # (2) Threshold
-        th, threshed = cv2.threshold(gray, 127, 255, cv2.THRESH_TRUNC)
+        # Thresholding
+        _, threshed = cv2.threshold(gray, 127, 255, cv2.THRESH_TRUNC)
 
-        # (3) Detect text using Tesseract
+        # Detect text using Tesseract
         result = pytesseract.image_to_string(threshed, lang="ind")
 
-        # (5) Normalize text
-        lines = []
-        for word in result.split("\n"):
-            # if "”—" in word:
-            #     word = word.replace("”—", ":")
-            if " 1 " in word:
-                    word = word.replace(" 1 ", " : ")
-            
-            # # Normalize NIK
-            # if "NIK" in word:
-            #     if "D" in word:
-            #         word = word.replace("D", "0")
-            #     if "?" in word:
-            #         word = word.replace("?", "7")
-            lines.append(word)
-        result = "\n".join(lines)
-        return lines
-        
-        return render_template('ocr.html', result=result)
+        # Define a dictionary to store extracted data
+        ktp_data = {
+            "nik": None,
+            "nama": None,
+            "tempat_tanggal_lahir": None,
+            "jenis_kelamin": None,
+            "gol_darah": None,
+            "alamat": None,
+            "rt_rw": None,
+            "kel_desa": None,
+            "kecamatan": None,
+            "kabupaten_kota": None,
+            "provinsi": None,
+            "agama": None,
+            "status_perkawinan": None,
+            "pekerjaan": None,
+            "kewarganegaraan": None,
+            "berlaku_hingga": None
+        }
+
+        lines = result.split("\n")
+        for line in lines:
+            current_app.logger.info(line)
+            if "N I K" in line or "NIK" in line:
+                nik_line =  line.split(":")[-1].strip()
+                ktp_data["nik"] = nik_line
+            if "Nama" in line:
+                nama_line =  line.split(":")[-1].strip()
+                nama_line = extract_capslock_text(nama_line)
+                ktp_data["nama"] = nama_line
+            if "Alamat" in line:
+                alamat_line =  line.split(":")[-1].strip()
+                alamat_line = extract_capslock_text(alamat_line)
+                ktp_data["alamat"] = alamat_line
+            if "RT/RW" in line:
+                rt_rw_line =  line.split(":")[-1].strip()
+                ktp_data["rt_rw"] = rt_rw_line
+            if "Kel/Desa" in line:
+                kel_desa_line =  line.split(":")[-1].strip()
+                kel_desa_line = extract_capslock_text(kel_desa_line)
+                ktp_data["kel_desa"] = kel_desa_line
+            if "Kecamatan" in line:
+                kecamatan_line =  line.split(":")[-1].strip()
+                kecamatan_line = extract_capslock_text(kecamatan_line)
+                ktp_data["kecamatan"] = kecamatan_line
+            if "KOTA" in line or "KABUPATEN" in line:
+                kabupaten_kota_line =  line.split(":")[-1].strip()
+                kabupaten_kota_line = extract_capslock_text(kabupaten_kota_line)
+                ktp_data["kabupaten_kota"] = kabupaten_kota_line
+            if "PROVINSI" in line:
+                provinsi_line =  line.split(":")[-1].strip()
+                provinsi_line = extract_capslock_text(provinsi_line)
+                ktp_data["provinsi"] = provinsi_line
+            if "Tempat/Tgl Lahir" in line or "Tempat/Tgi Lahir" in line:
+                tempat_tanggal_lahir_line =  line.split(":")[-1].strip()
+                tempat_tanggal_lahir_line = extract_capslock_text(tempat_tanggal_lahir_line)
+                ktp_data["tempat_tanggal_lahir"] = tempat_tanggal_lahir_line
+            if "Jenis Kelamin" in line:
+                jenis_kelamin_line =  line.split(":")[-1].strip()
+                jenis_kelamin_line = extract_capslock_text(jenis_kelamin_line)
+                ktp_data["jenis_kelamin"] = jenis_kelamin_line
+            if "Gol. Darah" in line:
+                gol_darah_line =  line.split(":")[-1].strip()
+                gol_darah_line = extract_capslock_text(gol_darah_line)
+                ktp_data["gol_darah"] = gol_darah_line
+            if "Agama" in line:
+                agama_line =  line.split(":")[-1].strip()
+                agama_line = extract_capslock_text(agama_line)
+                ktp_data["agama"] = agama_line
+            if "Status Perkawinan" in line:
+                status_perkawinan_line =  line.split(":")[-1].strip()
+                status_perkawinan_line = extract_capslock_text(status_perkawinan_line)
+                ktp_data["status_perkawinan"] = status_perkawinan_line
+            if "Pekerjaan" in line:
+                pekerjaan_line =  line.split(":")[-1].strip()
+                pekerjaan_line = extract_capslock_text(pekerjaan_line)
+                ktp_data["pekerjaan"] = pekerjaan_line
+            if "Kewarganegaraan" in line:
+                kewarganegaraan_line =  line.split(":")[-1].strip()
+                kewarganegaraan_line = extract_capslock_text(kewarganegaraan_line)
+                ktp_data["kewarganegaraan"] = kewarganegaraan_line
+            if "Berlaku Hingga" in line:
+                berlaku_hingga_line =  line.split(":")[-1].strip()
+                berlaku_hingga_line = extract_capslock_text(berlaku_hingga_line)
+                ktp_data["berlaku_hingga"] = berlaku_hingga_line
+
+        return jsonify(ktp_data)
 
     except Exception as e:
         error = f"Error: {str(e)}"
