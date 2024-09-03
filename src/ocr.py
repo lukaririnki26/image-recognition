@@ -4,6 +4,7 @@ import numpy as np
 import pytesseract
 from PIL import Image
 import re
+import matplotlib.pyplot as plt
 
 ocr = Blueprint('ocr', __name__)
 
@@ -29,18 +30,42 @@ def convert():
         return render_template('ocr.html', error=error)
 
     try:
-        # Convert the uploaded file to a NumPy array
+        #Convert the uploaded file to a NumPy array
         img = np.array(Image.open(file))
 
-        # Convert to grayscale
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        #Method 1
+        # # Convert to grayscale
+        # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # # Thresholding
+        # _, threshed = cv2.threshold(gray, 127, 255, cv2.THRESH_TRUNC)
+        # processed_image = cv2.GaussianBlur(threshed, (1, 1), 0)
+        # # Detect text using Tesseract
+        # result = pytesseract.image_to_string(threshed, config='--psm 4', lang='ind')
 
-        # Thresholding
-        _, threshed = cv2.threshold(gray, 127, 255, cv2.THRESH_TRUNC)
+        #Method 2
+        # Convert the image to grayscale
+        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # Apply GaussianBlur to reduce noise and detail in the image
+        blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
+        # Apply Otsu's thresholding after Gaussian filtering
+        _, binary_image = cv2.threshold(blurred_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # Use a larger kernel for the morphological operation to remove noise
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        processed_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel)
 
-        # Detect text using Tesseract
-        result = pytesseract.image_to_string(threshed, lang="ind")
+        # Display the processed image
+        plt.imshow(processed_image, cmap='gray')
+        plt.axis('off')
+        plt.show()
 
+        # Use Tesseract to extract text
+        custom_config = r'--oem 3 --psm 6'
+        result = pytesseract.image_to_string(processed_image, config=custom_config, lang='ind')
+
+
+
+
+        
         # Define a dictionary to store extracted data
         ktp_data = {
             "nik": None,
